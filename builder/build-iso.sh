@@ -217,8 +217,17 @@ mapfile -t all_packages < <(
 # still list it in omarchy-other.packages, so map it here until every channel
 # ships a runtime that names broadcom-wl-dkms itself.
 mapfile -t all_packages < <(
-  printf '%s\n' "${all_packages[@]}" | sed 's/^broadcom-wl$/broadcom-wl-dkms/' | sort -u
+  printf '%s\n' "${all_packages[@]}" |
+    sed -e 's/^broadcom-wl$/broadcom-wl-dkms/' \
+        -e '/^apple-bcm-firmware$/d' |
+    sort -u
 )
+
+# Safety invariant: never request the unavailable T2 firmware.
+if printf '%s\n' "${all_packages[@]}" | grep -Fxq apple-bcm-firmware; then
+  echo "ERROR: apple-bcm-firmware unexpectedly remains in all_packages" >&2
+  exit 1
+fi
 
 # With --local-source we already built these omarchy* packages directly into
 # the mirror; strip them from the pacman -Syw list so it doesn't try to fetch
