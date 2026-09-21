@@ -522,10 +522,7 @@ run_partition_decide() {
   local bl_part
   bl_part=$(detect_bitlocker || true)
   if [[ -n "$bl_part" ]]; then
-    say --foreground 1 "BitLocker signature detected on $bl_part."
-    say "Turn BitLocker off in Windows and wait for the drive to finish decrypting, then try again."
-    say "Suspending BitLocker is not enough — the drive stays encrypted."
-    abort "Aborted: BitLocker is enabled on this disk."
+    say "BitLocker detected on $bl_part — leaving existing partitions untouched."
   fi
 
   # Omarchy always creates its own dedicated ESP in free space and never
