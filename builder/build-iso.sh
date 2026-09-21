@@ -168,6 +168,16 @@ mkdir -p "$build_cache_dir/airootfs/usr/share/omarchy-iso"
 cp "${base_pkg_lists[0]}" "$build_cache_dir/airootfs/usr/share/omarchy-iso/omarchy-base.packages"
 cp "${base_pkg_lists[1]}" "$build_cache_dir/airootfs/usr/share/omarchy-iso/omarchy-other.packages"
 
+# Temporary workaround: package currently unavailable from arch-mact2.
+sed -i '/^apple-bcm-firmware$/d' \
+  "$build_cache_dir/airootfs/usr/share/omarchy-iso/omarchy-other.packages"
+
+# Build the offline mirror from the sanitized manifests shipped in the ISO.
+base_pkg_lists=(
+  "$build_cache_dir/airootfs/usr/share/omarchy-iso/omarchy-base.packages"
+  "$build_cache_dir/airootfs/usr/share/omarchy-iso/omarchy-other.packages"
+)
+
 # The configurator's setup form comes from the runtime this ISO bundles, so the
 # installer and the first-boot setup that finishes a deferred install can never
 # disagree. A runtime predating the split ships no such file, which would leave
