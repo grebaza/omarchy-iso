@@ -168,6 +168,16 @@ mkdir -p "$build_cache_dir/airootfs/usr/share/omarchy-iso"
 cp "${base_pkg_lists[0]}" "$build_cache_dir/airootfs/usr/share/omarchy-iso/omarchy-base.packages"
 cp "${base_pkg_lists[1]}" "$build_cache_dir/airootfs/usr/share/omarchy-iso/omarchy-other.packages"
 
+# Temporary workaround: package currently unavailable from arch-mact2.
+sed -i '/^apple-bcm-firmware$/d' \
+  "$build_cache_dir/airootfs/usr/share/omarchy-iso/omarchy-other.packages"
+
+# Build the offline mirror from the sanitized manifests shipped in the ISO.
+base_pkg_lists=(
+  "$build_cache_dir/airootfs/usr/share/omarchy-iso/omarchy-base.packages"
+  "$build_cache_dir/airootfs/usr/share/omarchy-iso/omarchy-other.packages"
+)
+
 # The configurator's setup form comes from the runtime this ISO bundles, so the
 # installer and the first-boot setup that finishes a deferred install can never
 # disagree. A runtime predating the split ships no such file, which would leave
@@ -207,8 +217,17 @@ mapfile -t all_packages < <(
 # still list it in omarchy-other.packages, so map it here until every channel
 # ships a runtime that names broadcom-wl-dkms itself.
 mapfile -t all_packages < <(
-  printf '%s\n' "${all_packages[@]}" | sed 's/^broadcom-wl$/broadcom-wl-dkms/' | sort -u
+  printf '%s\n' "${all_packages[@]}" |
+    sed -e 's/^broadcom-wl$/broadcom-wl-dkms/' \
+        -e '/^apple-bcm-firmware$/d' |
+    sort -u
 )
+
+# Safety invariant: never request the unavailable T2 firmware.
+if printf '%s\n' "${all_packages[@]}" | grep -Fxq apple-bcm-firmware; then
+  echo "ERROR: apple-bcm-firmware unexpectedly remains in all_packages" >&2
+  exit 1
+fi
 
 # With --local-source we already built these omarchy* packages directly into
 # the mirror; strip them from the pacman -Syw list so it doesn't try to fetch
